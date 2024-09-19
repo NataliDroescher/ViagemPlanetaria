@@ -1,0 +1,28 @@
+Para o seu projeto de rotas interplanetárias, você pode incorporar algumas funcionalidades com base em eventos astronômicos reais e restrições de viagens espaciais. Aqui estão algumas ideias para funcionalidades que podem tornar o sistema mais dinâmico e realista:
+
+### 1. **Limitação de Combustível e Rotas Alternativas**
+   - **Funcionalidade**: Simular o consumo de combustível para viagens entre planetas, com limitações que forcem a criação de rotas alternativas. Por exemplo, se a nave não tiver combustível suficiente para viajar diretamente a Urano, ela pode precisar fazer paradas para reabastecimento em estações espaciais ou em planetas intermediários como Júpiter ou Saturno.
+   - **Exemplo**: "O ônibus espacial não tem combustível suficiente para ir diretamente a Urano. Ele deve parar em Saturno para reabastecer antes de continuar a viagem."
+
+### 2. **Restrições Temporais Baseadas em Eventos Astronômicos**
+   - **Funcionalidade**: Impor restrições temporais de viagem baseadas em eventos astronômicos ou condições planetárias, como alinhamentos planetários, tempestades solares, ou períodos sazonais desfavoráveis.
+   - **Exemplo 1**: "Evitar viagens para Marte em dezembro devido às tempestades de areia, que são mais frequentes nessa época do ano."
+   - **Exemplo 2**: "O alinhamento planetário entre Terra e Júpiter em junho facilita viagens com menor consumo de combustível."
+
+### 3. **Fenômenos Gravitacionais**
+   - **Funcionalidade**: Simular assistências gravitacionais ou perturbações orbitais causadas pela proximidade de grandes planetas como Júpiter ou Saturno. Isso pode ser usado para reduzir o consumo de combustível em algumas viagens.
+   - **Exemplo**: "Usar a gravidade de Júpiter para um 'slingshot' que diminui o consumo de combustível na viagem para os planetas exteriores."
+
+### 4. **Fatores Ambientais e Clima Espacial**
+   - **Funcionalidade**: Adicionar eventos de clima espacial, como tempestades solares, que poderiam afetar a segurança da nave ou a comunicação durante certas rotas. Isso traria uma camada extra de planejamento e cuidado.
+   - **Exemplo**: "Devido a uma tempestade solar prevista, a viagem para Vênus foi adiada para evitar danos à nave."
+
+### 5. **Janelas de Lançamento e Posições Ótimas de Orbita**
+   - **Funcionalidade**: Definir janelas de lançamento ideais com base em distâncias variáveis entre os planetas. Algumas rotas só estarão disponíveis durante certos períodos devido à posição orbital dos planetas.
+   - **Exemplo**: "A janela de lançamento ideal para viajar da Terra a Marte ocorre a cada dois anos, quando os planetas estão mais próximos."
+
+### 6. **Desgaste da Nave**
+   - **Funcionalidade**: Incluir um sistema de desgaste da nave que depende da distância e do tempo de viagem, requerendo manutenção ao pousar em certas estações espaciais.
+   - **Exemplo**: "Após uma longa viagem a Netuno, o ônibus espacial precisa de manutenção antes de seguir para outro destino."
+
+Essas funcionalidades adicionam realismo e desafios ao planejamento de rotas interplanetárias, tornando o projeto mais interessante e estratégico. Se precisar de ajuda para desenvolver algum desses recursos no código, posso te auxiliar com a implementação!
