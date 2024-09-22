@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 
 
-valid_planets = ["Mercúrio", "Vênus", "Terra", "Marte", "Júpiter", "Saturno", "Urano", "Netuno"]
+valid_planets = ["Mercúrio", "Vênus", "Terra", "Marte", "Júpiter", "Saturno", "Urano", "Netuno", "Estacao_Esp1", "Estacao_Esp2", "Estacao_Esp3"]
 distances = {
     ("Mercúrio", "Vênus"): 38,
     ("Mercúrio", "Terra"): 91,
@@ -15,13 +15,11 @@ distances = {
     ("Mercúrio", "Júpiter"): 550,
     ("Mercúrio", "Saturno"): 1220,
     ("Mercúrio", "Urano"): 2600,
-    ("Mercúrio", "Netuno"): 4300,
     ("Vênus", "Terra"): 42,
     ("Vênus", "Marte"): 61,
     ("Vênus", "Júpiter"): 520,
     ("Vênus", "Saturno"): 1130,
     ("Vênus", "Urano"): 2480,
-    ("Vênus", "Netuno"): 4150,
     ("Terra", "Marte"): 78,
     ("Terra", "Júpiter"): 628,
     ("Terra", "Saturno"): 1270,
@@ -30,13 +28,18 @@ distances = {
     ("Marte", "Júpiter"): 558,
     ("Marte", "Saturno"): 1150,
     ("Marte", "Urano"): 2650,
-    ("Marte", "Netuno"): 4300,
     ("Júpiter", "Saturno"): 650,
     ("Júpiter", "Urano"): 1520,
     ("Júpiter", "Netuno"): 2380,
     ("Saturno", "Urano"): 870,
     ("Saturno", "Netuno"): 1420,
-    ("Urano", "Netuno"): 2850
+    ("Urano", "Netuno"): 2850,
+    ("Estacao_Esp1", "Mercúrio"): 500,
+    ("Estacao_Esp1", "Netuno"): 1000,
+    ("Estacao_Esp2", "Marte"): 400,
+    ("Estacao_Esp2", "Netuno"): 900,
+    ("Estacao_Esp3", "Vênus"): 450,
+    ("Estacao_Esp3", "Netuno"): 950,
 }
 
 G = nx.Graph()
@@ -107,16 +110,17 @@ def update_delete_planet_dropdown():
         delete_planet_var.set('')  # Se não houver planetas, deixar vazio
 
 # Função para calcular as posições normalizadas dos planetas
+
 def calculate_positions():
     """
     Calcula as posições dos planetas em um layout radial baseado nas distâncias, normalizando com log.
     """
-    pos = {}
+    pos = nx.spring_layout(G, seed=42)
     central_planet = "Terra"  # Colocar a Terra no centro
     pos[central_planet] = np.array([0, 0])
 
-    scale = 0.5  # Fator de escala para ajustar o espaçamento no gráfico
-    angle_step = 2 * np.pi / (len(valid_planets) - 1)  # Dividir 360 graus entre os planetas
+    scale = 1.5  # Aumente o fator de escala para mais espaçamento
+    angle_step = 2 * np.pi / (len(valid_planets))  # Dividir 360 graus entre os planetas
     angle = 0
 
     # Definir posições relativas em torno da Terra com base nas distâncias
@@ -136,9 +140,10 @@ def calculate_positions():
             normalized_distance = np.log1p(distance)  # log(1 + distância) para evitar log(0)
             # Calcular posição radial
             pos[planet] = np.array([np.cos(angle), np.sin(angle)]) * normalized_distance * scale
-            angle += angle_step
+            angle += angle_step * 1.5  # Aumente este valor para maior espaçamento angular
 
     return pos
+
 
 # Função para atualizar a visualização do grafo com as novas posições
 def update_graph():
@@ -170,28 +175,48 @@ def populate_planet_options():
 # Função para adicionar manualmente um planeta com base nas distâncias predefinidas
 def add_planet():
     planet = missing_planet_var.get()
-    
+
+    # Verificar se o planeta ou estação já existe no grafo
     if planet in G.nodes():
-        messagebox.showerror("Erro", "Planeta já existe no grafo!")
+        messagebox.showerror("Erro", "O planeta ou estação já existe no grafo!")
         return
-    
-    if planet:
+
+    # Verificar se o planeta é válido
+    if planet and planet in valid_planets:
+        # Verificar se há conexões válidas para adicionar o planeta
+        connections = []
+        for connection in valid_planets:
+            if connection in G.nodes():
+                if (planet, connection) in distances:
+                    connections.append(connection)
+                elif (connection, planet) in distances:
+                    connections.append(connection)
+
+        if not connections:
+            messagebox.showerror("Erro", "O planeta ou estação não tem conexões válidas com planetas no grafo!")
+            return
+
         try:
-            G.add_node(planet)  # Adicionar o planeta ao grafo
-            for connection in valid_planets:  # Adicionar conexões predefinidas
-                if connection in G.nodes() and (planet, connection) in distances:
+            # Adicionar o planeta ao grafo
+            G.add_node(planet)
+
+            # Adicionar as conexões válidas entre o planeta e outros planetas no grafo
+            for connection in connections:
+                if (planet, connection) in distances:
                     G.add_edge(planet, connection, weight=distances[(planet, connection)])
-                elif connection in G.nodes() and (connection, planet) in distances:
+                elif (connection, planet) in distances:
                     G.add_edge(planet, connection, weight=distances[(connection, planet)])
 
+            # Atualizar o grafo visualmente e os menus de opções
             update_graph()
-            populate_planet_options()  # Atualizar as opções de planeta no menu
-            update_missing_planets_dropdown()  # Atualizar a lista de planetas faltantes
-            update_delete_planet_dropdown()   # Atualizar o menu de exclusão de planetas
+            populate_planet_options()
+            update_missing_planets_dropdown()
+            update_delete_planet_dropdown()
+
         except Exception as e:
-            messagebox.showerror("Erro", f"Erro ao adicionar planeta: {str(e)}")
+            messagebox.showerror("Erro", f"Erro ao adicionar planeta ou estação: {str(e)}")
     else:
-        messagebox.showerror("Erro", "Selecione um planeta para adicionar.")
+        messagebox.showerror("Erro", "Selecione um planeta ou estação válida para adicionar.")
 
 # Função para excluir um planeta do grafo
 def delete_planet():
@@ -210,38 +235,108 @@ def delete_planet():
     else:
         messagebox.showerror("Erro", "Selecione um planeta válido para excluir.")
 
+# Adicionando um campo de texto para mostrar a viagem e o combustível
+# Função para mostrar o caminho mais curto e aplicar regras baseadas no mês
 def show_shortest_path():
     origin = origin_var.get()
     destination = destination_var.get()
-    stopover = stopover_var.get()
-    
-    if origin and destination:
+    stopover = stopover_var.get()  # Parada intermediária
+    fuel_available = fuel_var.get()  # Quantidade de combustível disponível
+    month = month_var.get()  # Mês da viagem
+
+    # Limpar o campo de texto
+    travel_info_text.delete(1.0, tk.END)
+
+    try:
+        fuel_available = float(fuel_available)  # Garantir que seja um número válido
+    except ValueError:
+        messagebox.showerror("Erro", "Por favor, insira uma quantidade válida de combustível.")
+        return
+
+    # Verificar se origem, destino e mês são válidos
+    if origin and destination and origin in G and destination in G and month.isdigit() and 1 <= int(month) <= 12:
+        month = int(month)  # Converter o mês para inteiro
         try:
-            if stopover and stopover != "Nenhuma":
-                # Calcular o caminho passando pela parada intermediária
+            # Regras baseadas no mês:
+            
+            # Regra 1: Viagens para Vênus (permitidas apenas em janeiro, março, junho)
+            if destination == "Neturno" and month not in [1, 3, 6]:
+                messagebox.showwarning("Aviso", "Viagens para Neturno fora de janeiro, março ou junho podem sofrer chuvas de meteoros.")
+            
+            # Regra 2: Evitar viagens para Marte em dezembro, fevereiro, agosto
+            if destination == "Marte" and month in [12, 2, 8]:
+                messagebox.showwarning("Aviso", "Viagens para Marte em dezembro, fevereiro ou agosto podem enfrentar tempestades de areia.")
+            
+            # Regra 3: Alinhamento planetário entre Terra e Júpiter (menor consumo de combustível em maio, junho, outubro)
+            if origin == "Terra" and destination == "Júpiter" and month in [5, 6, 10]:
+                travel_info_text.insert(tk.END, "Viagem facilitada pelo alinhamento planetário! Menor consumo de combustível.\n")
+                fuel_available += 200  # Bonificação de combustível
+
+            # Verificar se há parada em Júpiter ou Saturno para aplicar "slingshot"
+            if stopover == "Júpiter" or stopover == "Saturno":
+                travel_info_text.insert(tk.END, "Usar a gravidade de Júpiter ou Saturno para um 'slingshot', diminuindo o consumo de combustível.\n")
+                fuel_available += 500  # Bonificação de combustível
+                
+            if destination == "Vênus" and month in [12]:
+                travel_info_text.insert(tk.END, "Devido a uma tempestade solar prevista para Dezembro, a viagem para Vênus foi adiada para evitar danos à nave.\n")
+                return
+
+            # Calcular o caminho: com ou sem parada intermediária
+            if stopover and stopover != "Nenhuma" and stopover in G:
+                # Caminho origem -> parada -> destino
                 path1 = nx.shortest_path(G, source=origin, target=stopover, weight='weight')
                 path2 = nx.shortest_path(G, source=stopover, target=destination, weight='weight')
-                
-                if path1 and path2:
-                    # Unir os dois caminhos
-                    full_path = path1[:-1] + path2
-                    full_path_edges = list(zip(full_path, full_path[1:]))
-                else:
-                    messagebox.showerror("Erro", "Não há caminho entre os planetas especificados.")
-                    return
+                full_path = path1[:-1] + path2  # Combina os dois caminhos
             else:
-                # Calcular o caminho direto
+                # Caminho direto entre origem e destino
                 full_path = nx.shortest_path(G, source=origin, target=destination, weight='weight')
-                full_path_edges = list(zip(full_path, full_path[1:]))
-            
-            update_graph()  # Atualizar o grafo
-            
-            # Destacar o caminho mais curto
+
+            # Obter as arestas do caminho completo
+            full_path_edges = list(zip(full_path, full_path[1:]))
+
+            total_distance = 0  # Distância total percorrida
+
+            # Mostrar o início da viagem no campo de texto
+            travel_info_text.insert(tk.END, f"Viagem de {origin} para {destination}:\n")
+            travel_info_text.insert(tk.END, f"Combustível inicial: {fuel_available} unidades\n")
+
+            # Iterar sobre cada etapa da viagem
+            for edge in full_path_edges:
+                # Verificar se o caminho passa por uma estação espacial
+                if edge[0] in ["Estacao_Esp1", "Estacao_Esp2", "Estacao_Esp3"] or edge[1] in ["Estacao_Esp1", "Estacao_Esp2", "Estacao_Esp3"]:
+                    fuel_available += 1000  # Recarregar combustível ao passar pela estação espacial
+                    travel_info_text.insert(tk.END, f"Reabastecimento em estação espacial: {edge[1]}. Novo combustível: {fuel_available}\n")
+
+                # Calcular a distância para a próxima etapa
+                distance = distances.get(edge, distances.get((edge[1], edge[0]), 0))
+                total_distance += distance
+                fuel_available -= distance  # Reduzir o combustível disponível com base na distância percorrida
+
+                # Mostrar a etapa atual no campo de texto
+                travel_info_text.insert(tk.END, f"De {edge[0]} para {edge[1]}: {distance} km. Combustível restante: {fuel_available} unidades\n")
+
+                # Verificar se o combustível é suficiente para a próxima etapa
+                if fuel_available < 0:
+                    messagebox.showerror("Erro", f"Não é possível completar a viagem. Combustível insuficiente após {edge[0]} ou {edge[1]}.")
+                    travel_info_text.insert(tk.END, "Viagem interrompida por falta de combustível.\n")
+                    return
+
+            # Desenhar o caminho mais curto no gráfico
             pos = calculate_positions()  # Posições recalculadas
             nx.draw_networkx_edges(G, pos, edgelist=full_path_edges, edge_color='red', width=3, ax=fig.axes[0])
+
+            # Exibir a distância total percorrida e combustível final
+            travel_info_text.insert(tk.END, f"Viagem concluída!\nDistância total: {total_distance} km\nCombustível restante: {fuel_available} unidades\n")
+            travel_info_text.insert(tk.END, f"-------------------------------------------------")
+
+            # Atualizar o canvas com o caminho destacado
             canvas.draw()
+
         except nx.NetworkXNoPath:
             messagebox.showerror("Erro", f"Não há caminho entre {origin} e {destination}")
+    else:
+        messagebox.showerror("Erro", "Por favor, selecione uma origem, destino válidos e insira um mês válido (1-12).")
+
 
 # Interface Tkinter
 window = tk.Tk()
@@ -252,66 +347,86 @@ window.grid_columnconfigure(0, weight=1)
 window.grid_columnconfigure(1, weight=1)
 window.grid_columnconfigure(2, weight=1)
 window.grid_columnconfigure(3, weight=1)
+window.grid_columnconfigure(4, weight=2)  # Para o gráfico ocupar mais espaço
 
-# Botão de upload de CSV
+# Linha superior para os campos de entrada
 btn_upload = tk.Button(window, text="Carregar CSV", command=upload_csv)
-btn_upload.grid(row=0, column=0, columnspan=4, padx=2, pady=2, sticky='ew')
+btn_upload.grid(row=0, column=0, padx=2, pady=2, sticky='e')
 
-# Seletor de planeta de origem e destino
+fuel_label = tk.Label(window, text="Combustível disponível:")
+fuel_label.grid(row=0, column=1, padx=2, pady=2, sticky='w')
+
+fuel_var = tk.StringVar(window)
+fuel_entry = tk.Entry(window, textvariable=fuel_var)
+fuel_entry.grid(row=0, column=2, padx=2, pady=2, sticky='e')
+
 origin_var = tk.StringVar(window)
 destination_var = tk.StringVar(window)
 stopover_var = tk.StringVar(window)
 
 origin_label = tk.Label(window, text="Origem:")
-origin_label.grid(row=1, column=0, padx=2, pady=2, sticky='e')
+origin_label.grid(row=0, column=3, padx=2, pady=2, sticky='e')
 
 origin_menu = ttk.OptionMenu(window, origin_var, "", *valid_planets)
-origin_menu.grid(row=1, column=1, padx=2, pady=2, sticky='w')
+origin_menu.grid(row=0, column=4, padx=2, pady=2, sticky='w')
 
 destination_label = tk.Label(window, text="Destino:")
-destination_label.grid(row=1, column=2, padx=2, pady=2, sticky='e')
+destination_label.grid(row=0, column=5, padx=2, pady=2, sticky='e')
 
 destination_menu = ttk.OptionMenu(window, destination_var, "", *valid_planets)
-destination_menu.grid(row=1, column=3, padx=2, pady=2, sticky='w')
+destination_menu.grid(row=0, column=6, padx=2, pady=2, sticky='w')
 
 # Seletor para parada intermediária (opcional)
 stopover_label = tk.Label(window, text="Parada (Opcional):")
-stopover_label.grid(row=2, column=0, padx=2, pady=2, sticky='e')
+stopover_label.grid(row=0, column=7, padx=2, pady=2, sticky='e')
 
 stopover_menu = ttk.OptionMenu(window, stopover_var, "", *valid_planets)
-stopover_menu.grid(row=2, column=1, padx=2, pady=2, sticky='w')
+stopover_menu.grid(row=0, column=8, padx=2, pady=2, sticky='w')
 
 # Botão para mostrar o caminho mais curto
 btn_shortest_path = tk.Button(window, text="Caminho Mais Curto", command=show_shortest_path)
-btn_shortest_path.grid(row=2, column=2, columnspan=2, padx=2, pady=2, sticky='ew')
+btn_shortest_path.grid(row=0, column=9, padx=2, pady=2, sticky='ew')
 
 # Seletor para planetas faltantes (não no grafo)
 missing_planet_label = tk.Label(window, text="Adicionar Planeta:")
-missing_planet_label.grid(row=3, column=0, padx=2, pady=2, sticky='e')
+missing_planet_label.grid(row=1, column=0, padx=2, pady=2, sticky='e')
 
 missing_planet_var = tk.StringVar(window)
 missing_planet_menu = ttk.OptionMenu(window, missing_planet_var, "")
-missing_planet_menu.grid(row=3, column=1, padx=2, pady=2, sticky='w')
+missing_planet_menu.grid(row=1, column=1, padx=2, pady=2, sticky='w')
 
 # Botão para adicionar planeta
 btn_add_planet = tk.Button(window, text="Adicionar", command=add_planet)
-btn_add_planet.grid(row=3, column=2, columnspan=2, padx=2, pady=2, sticky='ew')
+btn_add_planet.grid(row=1, column=2, padx=2, pady=2, sticky='ew')
 
 # Seletor para excluir planetas no grafo
 delete_planet_label = tk.Label(window, text="Excluir Planeta:")
-delete_planet_label.grid(row=4, column=0, padx=2, pady=2, sticky='e')
+delete_planet_label.grid(row=1, column=3, padx=2, pady=2, sticky='e')
 
 delete_planet_var = tk.StringVar(window)
 delete_planet_menu = ttk.OptionMenu(window, delete_planet_var, "")
-delete_planet_menu.grid(row=4, column=1, padx=2, pady=2, sticky='w')
+delete_planet_menu.grid(row=1, column=4, padx=2, pady=2, sticky='w')
 
 # Botão para excluir planeta
 btn_delete_planet = tk.Button(window, text="Excluir", command=delete_planet)
-btn_delete_planet.grid(row=4, column=2, columnspan=2, padx=2, pady=2, sticky='ew')
+btn_delete_planet.grid(row=1, column=5, padx=2, pady=2, sticky='ew')
+
+# Adicionar o campo para o mês da viagem
+month_label = tk.Label(window, text="Mês da viagem (1-12):")
+month_label.grid(row=2, column=0, padx=2, pady=2, sticky='e')
+
+month_var = tk.StringVar(window)
+month_entry = tk.Entry(window, textvariable=month_var)
+month_entry.grid(row=2, column=1, padx=2, pady=2, sticky='w')
+
+
+# Adicionando um campo de texto na interface para mostrar a viagem e o combustível
+travel_info_text = tk.Text(window, height=5, width=50)  # Ajuste a altura e a largura aqui
+travel_info_text.grid(row=2, column=3, columnspan=10, padx=2, pady=2)
 
 # Visualização do grafo
-fig = plt.Figure(figsize=(7, 7))
+fig = plt.Figure(figsize=(6, 6))
 canvas = FigureCanvasTkAgg(fig, master=window)
-canvas.get_tk_widget().grid(row=0, column=4, rowspan=5, padx=2, pady=2)
+canvas.get_tk_widget().grid(row=3, column=0, columnspan=10, padx=2, pady=2)
 
 window.mainloop()
