@@ -8,6 +8,10 @@ import numpy as np
 
 
 valid_planets = ["Mercúrio", "Vênus", "Terra", "Marte", "Júpiter", "Saturno", "Urano", "Netuno", "Estacao_Esp1", "Estacao_Esp2", "Estacao_Esp3"]
+meses_do_ano = [
+    "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"
+]
 distances = {
     ("Mercúrio", "Vênus"): 38,
     ("Mercúrio", "Terra"): 91,
@@ -115,7 +119,7 @@ def calculate_positions():
     """
     Calcula as posições dos planetas em um layout radial baseado nas distâncias, normalizando com log.
     """
-    pos = nx.spring_layout(G, seed=42)
+    pos = nx.spring_layout(G, seed=42, k=5, iterations=50) 
     central_planet = "Terra"  # Colocar a Terra no centro
     pos[central_planet] = np.array([0, 0])
 
@@ -141,9 +145,32 @@ def calculate_positions():
             # Calcular posição radial
             pos[planet] = np.array([np.cos(angle), np.sin(angle)]) * normalized_distance * scale
             angle += angle_step * 1.5  # Aumente este valor para maior espaçamento angular
+    pos["Estacao_Esp1"] = np.array([1.2, -5])  # Posição manual da Estacao_Esp1
+    pos["Estacao_Esp2"] = np.array([2.5, -2])  # Posição manual da Estacao_Esp2
+    pos["Estacao_Esp3"] = np.array([4.5, -2])  # Posição manual da Estacao_Esp3
 
     return pos
 
+# Função para colorir os planetas e as estações espaciais
+def get_node_colors():
+    node_colors = []
+    for node in G.nodes:
+        if node in ["Mercúrio", "Vênus", "Terra", "Marte", "Júpiter", "Saturno", "Urano", "Netuno"]:
+            node_colors.append("lightblue")  # Planetas terão a cor azul claro
+        elif node.startswith("Estacao"):
+            node_colors.append("orange")  # Estações espaciais terão a cor laranja
+        else:
+            node_colors.append("gray")  # Outros nós terão a cor cinza
+    return node_colors
+# Função para definir o tamanho dos nós (planetas maiores, estações menores)
+def get_node_sizes():
+    node_sizes = []
+    for node in G.nodes:
+        if node in ["Mercúrio", "Vênus", "Terra", "Marte", "Júpiter", "Saturno", "Urano", "Netuno"]:
+            node_sizes.append(2000)  # Planetas maiores
+        else:
+            node_sizes.append(1000)  # Estações menores
+    return node_sizes
 
 # Função para atualizar a visualização do grafo com as novas posições
 def update_graph():
@@ -152,14 +179,18 @@ def update_graph():
     
     # Calcular posições personalizadas com base nas distâncias fornecidas
     pos = calculate_positions()
+    
+    # Obter as cores e tamanhos dos nós
+    node_colors = get_node_colors()
+    node_sizes = get_node_sizes()
 
-    # Desenhar o grafo
-    nx.draw(G, pos, with_labels=True, node_color='skyblue', node_size=2000, edge_color='gray', ax=ax)
+    # Desenhar o grafo com cores personalizadas e tamanhos de nós
+    nx.draw(G, pos, with_labels=True, node_color=node_colors, node_size=node_sizes, edge_color='gray', ax=ax, font_size=10, font_color='black')
     
-    # Obter rótulos das arestas
+     # Obter rótulos das arestas (distâncias)
     labels = nx.get_edge_attributes(G, 'weight')
-    nx.draw_networkx_edge_labels(G, pos, edge_labels={k: f"{v}" for k, v in labels.items()}, ax=ax)
-    
+    nx.draw_networkx_edge_labels(G, pos, edge_labels={k: f"{v}" for k, v in labels.items()}, ax=ax, font_color='red')
+
     canvas.draw()
 
 # Função para popular as opções de planetas
@@ -236,13 +267,12 @@ def delete_planet():
         messagebox.showerror("Erro", "Selecione um planeta válido para excluir.")
 
 # Adicionando um campo de texto para mostrar a viagem e o combustível
-# Função para mostrar o caminho mais curto e aplicar regras baseadas no mês
 def show_shortest_path():
     origin = origin_var.get()
     destination = destination_var.get()
     stopover = stopover_var.get()  # Parada intermediária
     fuel_available = fuel_var.get()  # Quantidade de combustível disponível
-    month = month_var.get()  # Mês da viagem
+    month = month_var.get()  # Nome do mês da viagem
 
     # Limpar o campo de texto
     travel_info_text.delete(1.0, tk.END)
@@ -254,21 +284,25 @@ def show_shortest_path():
         return
 
     # Verificar se origem, destino e mês são válidos
-    if origin and destination and origin in G and destination in G and month.isdigit() and 1 <= int(month) <= 12:
-        month = int(month)  # Converter o mês para inteiro
+    if origin and destination and origin in G and destination in G and month in meses_do_ano:
         try:
+            # Regra para cancelar a viagem se o destino for Vênus em dezembro
+            if destination == "Vênus" and month == "dezembro":
+                travel_info_text.insert(tk.END, "Devido a uma tempestade solar prevista para Dezembro, a viagem para Vênus foi adiada para evitar danos à nave.\n")
+                return  # Interrompe a viagem, não prossegue
+
             # Regras baseadas no mês:
             
             # Regra 1: Viagens para Vênus (permitidas apenas em janeiro, março, junho)
-            if destination == "Neturno" and month not in [1, 3, 6]:
-                messagebox.showwarning("Aviso", "Viagens para Neturno fora de janeiro, março ou junho podem sofrer chuvas de meteoros.")
+            if destination == "Vênus" and month not in ["janeiro", "março", "junho"]:
+                messagebox.showwarning("Aviso", "Viagens para Vênus fora de janeiro, março ou junho podem sofrer chuvas de meteoros.")
             
             # Regra 2: Evitar viagens para Marte em dezembro, fevereiro, agosto
-            if destination == "Marte" and month in [12, 2, 8]:
+            if destination == "Marte" and month in ["dezembro", "fevereiro", "agosto"]:
                 messagebox.showwarning("Aviso", "Viagens para Marte em dezembro, fevereiro ou agosto podem enfrentar tempestades de areia.")
             
             # Regra 3: Alinhamento planetário entre Terra e Júpiter (menor consumo de combustível em maio, junho, outubro)
-            if origin == "Terra" and destination == "Júpiter" and month in [5, 6, 10]:
+            if origin == "Terra" and destination == "Júpiter" and month in ["maio", "junho", "outubro"]:
                 travel_info_text.insert(tk.END, "Viagem facilitada pelo alinhamento planetário! Menor consumo de combustível.\n")
                 fuel_available += 200  # Bonificação de combustível
 
@@ -276,10 +310,6 @@ def show_shortest_path():
             if stopover == "Júpiter" or stopover == "Saturno":
                 travel_info_text.insert(tk.END, "Usar a gravidade de Júpiter ou Saturno para um 'slingshot', diminuindo o consumo de combustível.\n")
                 fuel_available += 500  # Bonificação de combustível
-                
-            if destination == "Vênus" and month in [12]:
-                travel_info_text.insert(tk.END, "Devido a uma tempestade solar prevista para Dezembro, a viagem para Vênus foi adiada para evitar danos à nave.\n")
-                return
 
             # Calcular o caminho: com ou sem parada intermediária
             if stopover and stopover != "Nenhuma" and stopover in G:
@@ -299,13 +329,18 @@ def show_shortest_path():
             # Mostrar o início da viagem no campo de texto
             travel_info_text.insert(tk.END, f"Viagem de {origin} para {destination}:\n")
             travel_info_text.insert(tk.END, f"Combustível inicial: {fuel_available} unidades\n")
+            
+            estacoes_espaciais = {"Estacao_Esp1", "Estacao_Esp2", "Estacao_Esp3"}
+            estacoes_visitadas = set()  # Para rastrear as estações espaciais já visitadas
 
-            # Iterar sobre cada etapa da viagem
             for edge in full_path_edges:
-                # Verificar se o caminho passa por uma estação espacial
-                if edge[0] in ["Estacao_Esp1", "Estacao_Esp2", "Estacao_Esp3"] or edge[1] in ["Estacao_Esp1", "Estacao_Esp2", "Estacao_Esp3"]:
+                # Verificar se o caminho passa por uma estação espacial e se ela já não foi visitada
+                if (edge[0] in estacoes_espaciais and edge[0] not in estacoes_visitadas) or \
+                (edge[1] in estacoes_espaciais and edge[1] not in estacoes_visitadas):
+                    estacao_espacial = edge[0] if edge[0] in estacoes_espaciais else edge[1]
                     fuel_available += 1000  # Recarregar combustível ao passar pela estação espacial
-                    travel_info_text.insert(tk.END, f"Reabastecimento em estação espacial: {edge[1]}. Novo combustível: {fuel_available}\n")
+                    estacoes_visitadas.add(estacao_espacial)  # Marcar a estação espacial como visitada
+                    travel_info_text.insert(tk.END, f"Reabastecimento em estação espacial: {estacao_espacial}. Novo combustível: {fuel_available}\n")
 
                 # Calcular a distância para a próxima etapa
                 distance = distances.get(edge, distances.get((edge[1], edge[0]), 0))
@@ -335,7 +370,15 @@ def show_shortest_path():
         except nx.NetworkXNoPath:
             messagebox.showerror("Erro", f"Não há caminho entre {origin} e {destination}")
     else:
-        messagebox.showerror("Erro", "Por favor, selecione uma origem, destino válidos e insira um mês válido (1-12).")
+        messagebox.showerror("Erro", "Por favor, selecione uma origem, destino válidos e insira um mês válido.")
+
+def reset_fields():
+    fuel_var.set('')  # Limpar o campo de combustível
+    origin_var.set('')  # Resetar origem
+    destination_var.set('')  # Resetar destino
+    stopover_var.set('Nenhuma')  # Resetar a parada intermediária para 'Nenhuma'
+    month_var.set(meses_do_ano[0])  # Resetar o mês para 'janeiro'
+    travel_info_text.delete(1.0, tk.END)  # Limpar o campo de texto com informações da viagem
 
 
 # Interface Tkinter
@@ -411,18 +454,22 @@ delete_planet_menu.grid(row=1, column=4, padx=2, pady=2, sticky='w')
 btn_delete_planet = tk.Button(window, text="Excluir", command=delete_planet)
 btn_delete_planet.grid(row=1, column=5, padx=2, pady=2, sticky='ew')
 
-# Adicionar o campo para o mês da viagem
-month_label = tk.Label(window, text="Mês da viagem (1-12):")
-month_label.grid(row=2, column=0, padx=2, pady=2, sticky='e')
+# Adicionar o campo para o mês da viagem como um OptionMenu
+month_label = tk.Label(window, text="Mês da viagem:")
+month_label.grid(row=2, column=1, padx=2, pady=2, sticky='e')
 
 month_var = tk.StringVar(window)
-month_entry = tk.Entry(window, textvariable=month_var)
-month_entry.grid(row=2, column=1, padx=2, pady=2, sticky='w')
+month_var.set(meses_do_ano[0])  # Definir janeiro como valor inicial
+month_menu = ttk.OptionMenu(window, month_var, *meses_do_ano)
+month_menu.grid(row=2, column=2, padx=2, pady=2, sticky='w')
 
+# Adicionando um botão para resetar todos os campos
+btn_reset = tk.Button(window, text="Resetar", command=reset_fields)
+btn_reset.grid(row=2, column=3, padx=2, pady=2)
 
 # Adicionando um campo de texto na interface para mostrar a viagem e o combustível
 travel_info_text = tk.Text(window, height=5, width=50)  # Ajuste a altura e a largura aqui
-travel_info_text.grid(row=2, column=3, columnspan=10, padx=2, pady=2)
+travel_info_text.grid(row=2, column=4, columnspan=10, padx=2, pady=2)
 
 # Visualização do grafo
 fig = plt.Figure(figsize=(6, 6))
