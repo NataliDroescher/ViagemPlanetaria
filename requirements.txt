@@ -1,0 +1,5 @@
+tkinter  # Tkinter já vem incluído na instalação padrão do Python, não é necessário no requirements.
+networkx==3.0
+matplotlib==3.8.0
+pandas==2.1.0
+numpy==1.26.0

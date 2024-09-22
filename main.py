@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import pandas as pd
 import numpy as np
+from distancia import distances
 
 
 valid_planets = ["Mercúrio", "Vênus", "Terra", "Marte", "Júpiter", "Saturno", "Urano", "Netuno", "Estacao_Esp1", "Estacao_Esp2", "Estacao_Esp3"]
@@ -12,39 +13,6 @@ meses_do_ano = [
     "janeiro", "fevereiro", "março", "abril", "maio", "junho",
     "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"
 ]
-distances = {
-    ("Mercúrio", "Vênus"): 38,
-    ("Mercúrio", "Terra"): 91,
-    ("Mercúrio", "Marte"): 78,
-    ("Mercúrio", "Júpiter"): 550,
-    ("Mercúrio", "Saturno"): 1220,
-    ("Mercúrio", "Urano"): 2600,
-    ("Vênus", "Terra"): 42,
-    ("Vênus", "Marte"): 61,
-    ("Vênus", "Júpiter"): 520,
-    ("Vênus", "Saturno"): 1130,
-    ("Vênus", "Urano"): 2480,
-    ("Terra", "Marte"): 78,
-    ("Terra", "Júpiter"): 628,
-    ("Terra", "Saturno"): 1270,
-    ("Terra", "Urano"): 2720,
-    ("Terra", "Netuno"): 4340,
-    ("Marte", "Júpiter"): 558,
-    ("Marte", "Saturno"): 1150,
-    ("Marte", "Urano"): 2650,
-    ("Júpiter", "Saturno"): 650,
-    ("Júpiter", "Urano"): 1520,
-    ("Júpiter", "Netuno"): 2380,
-    ("Saturno", "Urano"): 870,
-    ("Saturno", "Netuno"): 1420,
-    ("Urano", "Netuno"): 2850,
-    ("Estacao_Esp1", "Mercúrio"): 500,
-    ("Estacao_Esp1", "Netuno"): 1000,
-    ("Estacao_Esp2", "Marte"): 400,
-    ("Estacao_Esp2", "Netuno"): 900,
-    ("Estacao_Esp3", "Vênus"): 450,
-    ("Estacao_Esp3", "Netuno"): 950,
-}
 
 G = nx.Graph()
 
