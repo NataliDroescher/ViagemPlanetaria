@@ -379,6 +379,8 @@ def reset_fields():
     stopover_var.set('Nenhuma')  # Resetar a parada intermediária para 'Nenhuma'
     month_var.set(meses_do_ano[0])  # Resetar o mês para 'janeiro'
     travel_info_text.delete(1.0, tk.END)  # Limpar o campo de texto com informações da viagem
+    G.clear()  # Limpar todos os nós e arestas do grafo
+    update_graph()  # Atualizar a visualização do grafo na tela
 
 
 # Interface Tkinter
@@ -423,7 +425,7 @@ destination_menu.grid(row=0, column=6, padx=2, pady=2, sticky='w')
 stopover_label = tk.Label(window, text="Parada (Opcional):")
 stopover_label.grid(row=0, column=7, padx=2, pady=2, sticky='e')
 
-stopover_menu = ttk.OptionMenu(window, stopover_var, "", *valid_planets)
+stopover_menu = ttk.OptionMenu(window, stopover_var, "", "", *valid_planets)
 stopover_menu.grid(row=0, column=8, padx=2, pady=2, sticky='w')
 
 # Botão para mostrar o caminho mais curto
