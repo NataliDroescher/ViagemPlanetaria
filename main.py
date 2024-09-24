@@ -263,12 +263,14 @@ def show_shortest_path():
             
             # Regra 1: Viagens para Vênus (permitidas apenas em janeiro, março, junho)
             if destination == "Vênus" and month not in ["janeiro", "março", "junho"]:
-                messagebox.showwarning("Aviso", "Viagens para Vênus fora de janeiro, março ou junho podem sofrer chuvas de meteoros.")
-            
+                travel_info_text.insert(tk.END, "Aviso! Viagens para Vênus fora de janeiro, março ou junho podem sofrer chuvas de meteoros. Viagem cancelada!")
+            return # Interrompe a viagem, não prossegue
+
             # Regra 2: Evitar viagens para Marte em dezembro, fevereiro, agosto
             if destination == "Marte" and month in ["dezembro", "fevereiro", "agosto"]:
-                messagebox.showwarning("Aviso", "Viagens para Marte em dezembro, fevereiro ou agosto podem enfrentar tempestades de areia.")
-            
+                messagebox.showwarning("Aviso", "Viagens para Marte em dezembro, fevereiro ou agosto podem enfrentar tempestades de areia. Viagem cancelada!")
+            return
+
             # Regra 3: Alinhamento planetário entre Terra e Júpiter (menor consumo de combustível em maio, junho, outubro)
             if origin == "Terra" and destination == "Júpiter" and month in ["maio", "junho", "outubro"]:
                 travel_info_text.insert(tk.END, "Viagem facilitada pelo alinhamento planetário! Menor consumo de combustível.\n")
@@ -349,6 +351,45 @@ def reset_fields():
     travel_info_text.delete(1.0, tk.END)  # Limpar o campo de texto com informações da viagem
     G.clear()  # Limpar todos os nós e arestas do grafo
     update_graph()  # Atualizar a visualização do grafo na tela
+
+def list_graph_details(graph):
+    details = []
+
+    # Verifica se o grafo é um dígrafo ou um grafo simples
+    if isinstance(graph, nx.DiGraph):
+        details.append("O grafo é um Dígrafo (direcionado).")
+    else:
+        details.append("O grafo é um Grafo simples (não direcionado).")
+
+    # Verifica se o grafo é valorado (tem pesos nas arestas)
+    if nx.is_weighted(graph):
+        details.append("O grafo é valorado (as arestas possuem pesos).")
+    else:
+        details.append("O grafo não é valorado (as arestas não possuem pesos).")
+
+    # Verifica se o grafo possui laços (self-loops)
+    if nx.number_of_selfloops(graph) > 0:
+        details.append(f"O grafo contém {nx.number_of_selfloops(graph)} laço(s).")
+    else:
+        details.append("O grafo não contém laços.")
+
+    # Lista o grau de cada vértice
+    if isinstance(graph, nx.DiGraph):  # Para dígrafos, temos graus de entrada e saída
+        for node in graph.nodes:
+            in_degree = graph.in_degree(node)
+            out_degree = graph.out_degree(node)
+            details.append(f"Vértice {node}: Grau de Entrada = {in_degree}, Grau de Saída = {out_degree}")
+    else:  # Para grafos simples, só existe o grau total
+        for node in graph.nodes:
+            degree = graph.degree(node)
+            details.append(f"Vértice {node}: Grau = {degree}")
+    
+    return "\n".join(details)  # Junta os detalhes em uma única string para exibir
+
+def show_graph_details():
+    details = list_graph_details(G)
+    travel_info_text.delete(1.0, tk.END)  # Limpa o campo de texto
+    travel_info_text.insert(tk.END, details)  # Insere os detalhes no campo de texto
 
 
 # Interface Tkinter
