@@ -88,37 +88,37 @@ def upload_csv():
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao carregar arquivo CSV: {str(e)}")
 
-#Gernado a Matriz de adjacency
+#Gernado a Matriz
 def generate_adjacency_matrix():
     nodes = list(G.nodes())
     n = len(nodes)
-    adj_matrix = np.zeros((n, n))  # Cria uma matriz n x n inicializada com zeros
+    adj_matrix = np.zeros((n, n))  
     
     for i, node1 in enumerate(nodes):
         for j, node2 in enumerate(nodes):
             if G.has_edge(node1, node2):
-                adj_matrix[i, j] = G[node1][node2]['weight']  # Usar o peso da aresta (distância) como valor
+                adj_matrix[i, j] = G[node1][node2]['weight']  
             else:
-                adj_matrix[i, j] = 0  # Sem conexão (aresta)
+                adj_matrix[i, j] = 0  
     
-    # Converter a matriz de numpy para um DataFrame para exibir com os rótulos de linhas e colunas
+   
     adj_df = pd.DataFrame(adj_matrix, index=nodes, columns=nodes)
     
     return adj_df
 
 # Função para atualizar a lista de planetas que não estão no grafo
 def update_missing_planets_dropdown():
-    planets_in_graph = set(G.nodes())  # Obter os planetas que estão no grafo
-    missing_planets = [planet for planet in valid_planets if planet not in planets_in_graph]  # Planetas que ainda não estão no grafo
+    planets_in_graph = set(G.nodes())  
+    missing_planets = [planet for planet in valid_planets if planet not in planets_in_graph]  
     
-    missing_planet_menu['menu'].delete(0, 'end')  # Limpar as opções do dropdown
+    missing_planet_menu['menu'].delete(0, 'end')  
     if missing_planets:
         for planet in missing_planets:
             missing_planet_menu['menu'].add_command(label=planet, command=tk._setit(missing_planet_var, planet))
-        missing_planet_var.set(missing_planets[0])  # Definir o primeiro planeta como padrão
+        missing_planet_var.set(missing_planets[0]) 
     else:
-        missing_planet_var.set('')  # Se nenhum planeta faltar, deixar vazio
-
+        missing_planet_var.set('')  
+        
 # Função para atualizar o menu de exclusão de planetas
 def update_delete_planet_dropdown():
     planets_in_graph = list(G.nodes())  # Obter os planetas que estão no grafo
@@ -133,9 +133,6 @@ def update_delete_planet_dropdown():
 
 # Função para calcular as posições normalizadas dos planetas
 def calculate_positions():
-    """
-    Calcula as posições dos planetas em um layout radial baseado nas distâncias, normalizando com log.
-    """
     pos = nx.spring_layout(G, seed=42, k=5, iterations=50) 
     central_planet = "Terra"  # Colocar a Terra no centro
     pos[central_planet] = np.array([0, 0])
@@ -162,6 +159,8 @@ def calculate_positions():
             # Calcular posição radial
             pos[planet] = np.array([np.cos(angle), np.sin(angle)]) * normalized_distance * scale
             angle += angle_step * 1.5  # Aumente este valor para maior espaçamento angular
+            
+            
     pos["Estacao_Esp1"] = np.array([1.2, -5])  # Posição manual da Estacao_Esp1
     pos["Estacao_Esp2"] = np.array([2.5, -2])  # Posição manual da Estacao_Esp2
     pos["Estacao_Esp3"] = np.array([4.5, -2])  # Posição manual da Estacao_Esp3
@@ -185,7 +184,7 @@ def get_node_sizes():
     node_sizes = []
     for node in G.nodes:
         if node in ["Mercúrio", "Vênus", "Terra", "Marte", "Júpiter", "Saturno", "Urano", "Netuno"]:
-            node_sizes.append(2000)  # Planetas maiores
+            node_sizes.append(2000)  
         else:
             node_sizes.append(1000)  # Estações menores
     return node_sizes
@@ -218,8 +217,7 @@ def populate_planet_options():
        planet_list = ["Nenhuma"] 
        
     stopover_planet_list = ["Nenhuma"] + planet_list  # Adicionar "Nenhuma" no início da lista
-
-       
+    
     origin_menu['menu'].delete(0, 'end')
     destination_menu['menu'].delete(0, 'end')
     stopover_menu['menu'].delete(0, 'end')
@@ -246,7 +244,7 @@ def populate_planet_options():
 def add_planet():
     planet = missing_planet_var.get()
 
-    # Verificar se o planeta ou estação já existe no grafo
+  
     if planet in G.nodes():
         messagebox.showerror("Erro", "O planeta ou estação já existe no grafo!")
         return
@@ -267,17 +265,17 @@ def add_planet():
             return
 
         try:
-            # Adicionar o planeta ao grafo
+            
             G.add_node(planet)
 
-            # Adicionar as conexões válidas entre o planeta e outros planetas no grafo
+            
             for connection in connections:
                 if (planet, connection) in distances:
                     G.add_edge(planet, connection, weight=distances[(planet, connection)])
                 elif (connection, planet) in distances:
                     G.add_edge(planet, connection, weight=distances[(connection, planet)])
 
-            # Atualizar o grafo visualmente e os menus de opções
+          
             update_graph()
             populate_planet_options()
             update_missing_planets_dropdown()
@@ -294,11 +292,11 @@ def delete_planet():
     
     if planet in G.nodes():
         try:
-            G.remove_node(planet)  # Remover o planeta do grafo
-            update_graph()  # Atualizar o grafo
-            populate_planet_options()  # Atualizar as opções de planeta no menu
-            update_missing_planets_dropdown()  # Atualizar a lista de planetas faltantes
-            update_delete_planet_dropdown()   # Atualizar o menu de exclusão de planetas
+            G.remove_node(planet) 
+            update_graph()
+            populate_planet_options()  
+            update_missing_planets_dropdown()  
+            update_delete_planet_dropdown()   
             messagebox.showinfo("Sucesso", f"O planeta {planet} foi excluído do grafo.")
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao excluir planeta: {str(e)}")
@@ -309,23 +307,22 @@ def delete_planet():
 def show_shortest_path():
     origin = origin_var.get()
     destination = destination_var.get()
-    stopover = stopover_var.get()  # Parada intermediária
-    fuel_available = fuel_var.get()  # Quantidade de combustível disponível
-    month = month_var.get()  # Nome do mês da viagem
+    stopover = stopover_var.get()  
+    fuel_available = fuel_var.get()  
+    month = month_var.get()  
 
-    # Limpar o campo de texto
     travel_info_text.delete(1.0, tk.END)
 
     try:
-        fuel_available = float(fuel_available)  # Garantir que seja um número válido
+        fuel_available = float(fuel_available)  
     except ValueError:
         messagebox.showerror("Erro", "Por favor, insira uma quantidade válida de combustível.")
         return
 
-    # Verificar se origem, destino e mês são válidos
+   
     if origin and destination and origin in G and destination in G and month in meses_do_ano:
         try:
-            # Limpar o gráfico antes de desenhar um novo caminho
+           
             update_graph()
 
             # Regra para cancelar a viagem se o destino for Vênus em dezembro
@@ -333,66 +330,63 @@ def show_shortest_path():
                 travel_info_text.insert(tk.END, "Devido a uma tempestade solar prevista para Dezembro, a viagem para Vênus foi adiada para evitar danos à nave.\n")
                 return  # Interrompe a viagem, não prossegue
 
-            # Regras baseadas no mês:
+         
            # Regra 1: Viagens para Vênus (Chuvas de meteoros ocorrem fora messes em janeiro, março, junho)
             if destination == "Saturno" and month not in ["janeiro", "março", "junho"]:
-                # Exibir janela com botões "Sim" e "Não"
+                
                 proceed = messagebox.askyesno("Aviso", "Viagens para Vênus fora de janeiro, março ou junho podem sofrer chuvas de meteoros.\nDeseja continuar com a viagem?")
                 travel_info_text.insert(tk.END, "Ops parece que você escolheu viajar da mesmo com chuva de meteoros, você perder 150 de combustivel.\n")
-                fuel_available -= 150  # Bonificação de combustível
+                fuel_available -= 150 
                 if not proceed:
-                    # Se o usuário escolher "Não", cancelar a viagem
                     travel_info_text.insert(tk.END, "Viagem cancelada devido às condições meteorológicas em Saturno.\n")
-                    return  # Interrompe a viagem, não prossegue
+                    return  
 
             # Regra 2: Evitar viagens para Marte em dezembro, fevereiro, agosto
             if destination == "Marte" and month in ["dezembro", "fevereiro", "agosto"]:
                 messagebox.showwarning("Aviso", "Viagens para Marte em dezembro, fevereiro ou agosto podem enfrentar tempestades de areia, podendo reduzir drasticamente a visibilidade e afetar operações de pouso.")
                 travel_info_text.insert(tk.END, "Ops parece que você escolheu viajar da mesmo com a tempestade você vai perder 200 de combustivel, pois a tempestade foi intensa.\n")
-                fuel_available -= 200  # Bonificação de combustível
+                fuel_available -= 200  
                 if not proceed:
-                    # Se o usuário escolher "Não", cancelar a viagem
+                   
                     travel_info_text.insert(tk.END, "Viagem cancelada devido às condições meteorológicas em Marte.\n")
-                    return  # Interrompe a viagem, não prossegue
-                
+                    return  
+                                
             # Regra 3: Alinhamento planetário entre Terra e Júpiter (menor consumo de combustível em maio, junho, outubro)
             if origin == "Terra" and destination == "Júpiter" and month in ["maio", "junho", "outubro"]:
                 travel_info_text.insert(tk.END, "Viagem facilitada pelo alinhamento planetário! Menor consumo de combustível.\n")
-                fuel_available += 200  # Bonificação de combustível
+                fuel_available += 200 
             
              # Regra 4: Viagens a Netuno nos messes de janeiro a abril, não podem ocorrer)
             if destination == "Netuno" and month in ["janeiro", "abril"]:
                 messagebox.showwarning("Aviso", "Viagens para Neturno em jeneiro e Abril podem enfrentar fortes ventos, são os ventos mais rapidos do sistema solar! Por tanto não pode ocorrer.")
                 travel_info_text.insert(tk.END, "Viagem cancelada devido às condições meteorológicas em Neturno.\n")
-                return  # Interrompe a viagem, não prossegue
+                return 
 
             # Regra 5: Verificar se há parada em Júpiter ou Saturno para aplicar "slingshot"
             if stopover == "Júpiter" or stopover == "Saturno":
                 travel_info_text.insert(tk.END, "Usar a gravidade de Júpiter ou Saturno para um 'slingshot', diminuindo o consumo de combustível.\n")
-                fuel_available += 300  # Bonificação de combustível
-            
+                fuel_available += 300              
 
-            # Calcular o caminho: com ou sem parada intermediária
+           
             if stopover and stopover != "Nenhuma" and stopover in G:
-                # Caminho origem -> parada -> destino
+                
                 path1 = nx.shortest_path(G, source=origin, target=stopover, weight='weight')
                 path2 = nx.shortest_path(G, source=stopover, target=destination, weight='weight')
-                full_path = path1[:-1] + path2  # Combina os dois caminhos
+                full_path = path1[:-1] + path2 
             else:
-                # Caminho direto entre origem e destino
+              
                 full_path = nx.shortest_path(G, source=origin, target=destination, weight='weight')
 
-            # Obter as arestas do caminho completo
             full_path_edges = list(zip(full_path, full_path[1:]))
 
-            total_distance = 0  # Distância total percorrida
+            total_distance = 0  
 
-            # Mostrar o início da viagem no campo de texto
+            
             travel_info_text.insert(tk.END, f"Viagem de {origin} para {destination}:\n")
             travel_info_text.insert(tk.END, f"Combustível inicial: {fuel_available} unidades\n")
             
             estacoes_espaciais = {"Estacao_Esp1", "Estacao_Esp2", "Estacao_Esp3"}
-            estacoes_visitadas = set()  # Para rastrear as estações espaciais já visitadas
+            estacoes_visitadas = set() 
 
             for edge in full_path_edges:
                 # Verificar se o caminho passa por uma estação espacial e se ela já não foi visitada
@@ -417,7 +411,6 @@ def show_shortest_path():
                     travel_info_text.insert(tk.END, "Viagem interrompida por falta de combustível.\n")
                     return
 
-            # Desenhar o caminho mais curto no gráfico
             pos = calculate_positions()  # Posições recalculadas
             nx.draw_networkx_edges(G, pos, edgelist=full_path_edges, edge_color='red', width=3, ax=fig.axes[0])
 
@@ -442,7 +435,6 @@ def reset_fields():
     
     travel_info_text.delete(1.0, tk.END)  # Limpar o campo de texto com informações da viagem
     '''
-     # Resetar o grafo
     G.clear()  # Remove todos os nós e arestas do grafo
     
     # Atualizar visualmente o grafo (para refletir o reset)
@@ -457,53 +449,108 @@ def reset_fields():
     '''
 # Mostrar as informações do Grafo
 def show_graph_info():
-    """
-    Exibe informações sobre o grafo:
-    - Se é direcionado
-    - Se é valorado (com pesos nas arestas)
-    - Se possui laços (arestas de um nó para ele mesmo)
-    - O grau de cada vértice (número de conexões)
-    """
+   
     info_text = ""
-
-    # Verificar se é um grafo direcionado ou não
+    
     if G.is_directed():
         info_text += "O grafo é direcionado.\n"
     else:
         info_text += "O grafo NÃO é direcionado.\n"
 
-    # Verificar se o grafo é valorado (se tem pesos nas arestas)
+    
     if nx.get_edge_attributes(G, 'weight'):
         info_text += "O grafo é valorado (contém pesos nas arestas).\n"
     else:
         info_text += "O grafo NÃO é valorado.\n"
 
-    # Verificar se há laços (arestas de um vértice para ele mesmo)
+    
     self_loops = list(nx.selfloop_edges(G))
     if self_loops:
         info_text += f"O grafo contém {len(self_loops)} laço(s): {self_loops}\n"
     else:
         info_text += "O grafo NÃO contém laços.\n"
 
-    # Listar o grau de cada vértice
+   
     info_text += "Graus dos vértices:\n"
     for node in G.nodes:
         info_text += f"- {node}: {G.degree(node)} conexões\n"
 
 
-    # Criar uma nova janela para exibir as informações
-    info_window = tk.Toplevel(window)  # Criar uma nova janela
-    info_window.title("Dados do Grafo")  # Título da nova janela
+   
+    info_window = tk.Toplevel(window) 
+    info_window.title("Dados do Grafo")  
     
-    # Adicionar um campo de texto na nova janela
+ 
     text_widget = tk.Text(info_window, height=15, width=50)
     text_widget.pack(padx=10, pady=10)
     
-    # Inserir o texto com as informações do grafo
+ 
     text_widget.insert(tk.END, info_text)
     
-    # Desativar edição (modo somente leitura)
+    
     text_widget.config(state=tk.DISABLED)
+
+#Verificar o tipo que é o grafo
+def verificar_tipo_de_grafo():
+    """
+    Verifica o tipo do grafo: Euleriano, semi-Euleriano, Hamiltoniano, simples, nulo, trivial ou regular.
+    """
+    tipo_grafo = []
+
+   
+    if not nx.is_connected(G): 
+        tipo_grafo.append("O grafo não é conexo, portanto, não é Euleriano nem semi-Euleriano.")
+    else:
+        # Contar os vértices com grau ímpar
+        vertices_grau_impar = [v for v, grau in G.degree() if grau % 2 != 0]
+
+        if len(vertices_grau_impar) == 0:
+            tipo_grafo.append("O grafo é Euleriano (contém um ciclo de Euler).")
+        elif len(vertices_grau_impar) == 2:
+            tipo_grafo.append("O grafo é semi-Euleriano (contém um caminho de Euler).")
+        else:
+            tipo_grafo.append("O grafo não é Euleriano nem semi-Euleriano.")
+
+   
+    try:
+        ciclo_hamiltoniano = list(nx.find_cycle(G))
+        tipo_grafo.append("O grafo é Hamiltoniano (contém um ciclo de Hamilton).")
+    except nx.NetworkXNoCycle:
+        tipo_grafo.append("O grafo não é Hamiltoniano.")
+
+    if any(G.has_edge(v, v) for v in G.nodes()):
+        tipo_grafo.append("O grafo não é simples (contém laços).")
+    else:
+        tipo_grafo.append("O grafo é simples (não contém laços).")
+
+    if len(G.edges()) == 0:
+        tipo_grafo.append("O grafo é nulo (não contém arestas).")
+
+    if len(G.nodes()) == 1:
+        tipo_grafo.append("O grafo é trivial (apenas um vértice).")
+
+    graus = [grau for _, grau in G.degree()]
+    if len(set(graus)) == 1:
+        tipo_grafo.append("O grafo é regular (todos os vértices têm o mesmo grau).")
+    else:
+        tipo_grafo.append("O grafo não é regular (vértices com graus diferentes).")
+
+    return "\n".join(tipo_grafo)
+
+def mostrar_tipo_de_grafo():
+    """
+    Mostra o tipo de grafo (Euleriano, semi-Euleriano, Hamiltoniano, simples, composto, nulo, trivial ou regular) em uma janela.
+    """
+    tipo_grafo = verificar_tipo_de_grafo()
+
+    # Criar uma nova janela para exibir o resultado
+    tipo_window = tk.Toplevel(window)
+    tipo_window.title("Tipo de Grafo")
+
+    # Adicionar uma label para mostrar o resultado
+    label = tk.Label(tipo_window, text=tipo_grafo, wraplength=300, justify="left")
+    label.pack(padx=10, pady=10)
+
 # Consultar as arestas e os Vertices
 def consultar_aresta():
     """
@@ -541,7 +588,6 @@ def consultar_aresta():
     consulta_window = tk.Toplevel(window)
     consulta_window.title("Consultar Aresta e Vértice")
 
-    # Seção para consultar aresta (origem e destino)
     origem_var = tk.StringVar(consulta_window)
     destino_var = tk.StringVar(consulta_window)
 
@@ -560,7 +606,6 @@ def consultar_aresta():
     resultado_label = tk.Label(consulta_window, textvariable=resultado_var, wraplength=300, justify="left")
     resultado_label.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
 
-    # Seção para consultar vértice
     vertice_var = tk.StringVar(consulta_window)
 
     tk.Label(consulta_window, text="Vértice:").grid(row=4, column=0, padx=5, pady=5, sticky='e')
@@ -576,29 +621,24 @@ def consultar_aresta():
 # Mostrar a matriz de adjacencia
 def show_adjacency_matrix():
     try:
-        # Gerar a matriz de adjacência
+       
         adj_df = generate_adjacency_matrix()
 
-        # Criar uma nova janela para exibir a matriz
         matrix_window = tk.Toplevel(window)
         matrix_window.title("Matriz de Adjacência")
 
-        # Adicionar um Treeview (tabela) para exibir a matriz
         tree = ttk.Treeview(matrix_window, columns=list(adj_df.columns), show='headings', height=adj_df.shape[0])
 
-        # Definir as colunas com os nomes dos planetas (strings)
         for col in adj_df.columns:
-            tree.heading(col, text=col)  # Nome da coluna como o planeta
-            tree.column(col, width=100)  # Largura da coluna
-
-        # Adicionar os dados na tabela (linha por linha)
+            tree.heading(col, text=col)  
+            tree.column(col, width=100)  
+            
         for index, row in adj_df.iterrows():
-            tree.insert("", "end", values=list(row))  # Inserir valores de cada linha como uma lista
+            tree.insert("", "end", values=list(row)) 
 
-        # Adicionar a tabela na janela
+    
         tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # Adicionar uma barra de rolagem, caso necessário
         scrollbar = ttk.Scrollbar(matrix_window, orient="vertical", command=tree.yview)
         tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -611,14 +651,12 @@ def show_adjacency_matrix():
 window = tk.Tk()
 window.title("Planejamento de Rotas Interplanetárias")
 
-# Configurar layout usando grid na janela principal
 window.grid_columnconfigure(0, weight=1)
 window.grid_columnconfigure(1, weight=1)
 window.grid_columnconfigure(2, weight=1)
 window.grid_columnconfigure(3, weight=1)
 window.grid_columnconfigure(4, weight=1)
 
-# Criar variáveis Tkinter StringVar() antes de usar nos OptionMenus
 fuel_var = tk.StringVar(window)
 origin_var = tk.StringVar(window)
 destination_var = tk.StringVar(window)
@@ -627,14 +665,11 @@ month_var = tk.StringVar(window)
 missing_planet_var = tk.StringVar(window)
 delete_planet_var = tk.StringVar(window)
 
-# Definir um valor padrão para o campo de mês
-month_var.set(meses_do_ano[0])  # Janeiro como valor inicial
+month_var.set(meses_do_ano[0])
 
-# Frame para os controles de entrada (Parte superior)
 frame_top_controls = tk.Frame(window)
 frame_top_controls.grid(row=0, column=0, columnspan=10, padx=10, pady=5, sticky='ew')
 
-# Linha superior para os campos de entrada
 btn_upload = tk.Button(frame_top_controls, text="Carregar CSV", command=upload_csv)
 btn_upload.grid(row=0, column=0, padx=5, pady=5, sticky='ew')
 
@@ -708,12 +743,15 @@ btn_show_graph_info.grid(row=2, column=2, padx=5, pady=5, sticky='ew')
 btn_consultar_aresta = tk.Button(frame_actions, text="Dados do Grafo", command=consultar_aresta)
 btn_consultar_aresta.grid(row=2, column=3, padx=5, pady=5, sticky='ew')
 
+btn_tipo_de_grafo = tk.Button(frame_actions, text="Verificar Tipo de Grafo", command=mostrar_tipo_de_grafo)
+btn_tipo_de_grafo.grid(row=2, column=5, padx=2, pady=2, sticky='ew')
+
 btn_show_adj_matrix = tk.Button(frame_actions, text="Matriz_Adj", command=show_adjacency_matrix)
 btn_show_adj_matrix.grid(row=2, column=4, padx=5, pady=5, sticky='ew')
 
 # Campo de texto para exibir a viagem e o combustível
 travel_info_text = tk.Text(window, height=5, width=50)
-travel_info_text.grid(row=2, column=5, columnspan=10, padx=10, pady=5, sticky='w')
+travel_info_text.grid(row=2, column=6, columnspan=10, padx=10, pady=5, sticky='w')
 
 
 # Frame para a visualização do grafo (parte inferior)
