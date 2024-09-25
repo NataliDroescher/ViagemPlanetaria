@@ -189,26 +189,48 @@ def get_node_sizes():
             node_sizes.append(1000)  # Estações menores
     return node_sizes
 
-# Função para atualizar a visualização do grafo com as novas posições
+planet_colors = {
+    "Mercúrio": "#E1C699",
+    "Vênus": "#F9E79F",
+    "Terra": "#ADD8E6",
+    "Marte": "#FFB6C1",
+    "Júpiter": "#D2B48C",
+    "Saturno": "#FDEBD0",
+    "Urano": "#AFEEEE",
+    "Netuno": "#87CEEB",
+    "Estacao_Esp1": "#FFFFFF",
+    "Estacao_Esp2": "#FFFFFF",
+    "Estacao_Esp3": "#FFFFFF",
+}
+
+# Função para atualizar a visualização do grafo com as novas posições e cores
 def update_graph():
     fig.clear()
-    ax = fig.add_subplot(111)
-    
+    # Remover o 'patch' que pode causar o fundo branco
+    fig.patch.set_visible(False)  # Isso garante que o fundo padrão do Matplotlib não seja desenhado
+
+    # Criar o subplot e definir o fundo da área do gráfico
+    ax = fig.add_subplot(111, facecolor='#0d1b2a')  # Define o fundo azul da área de plotagem diretamente
+
+    # Desativar a grade para garantir que não haja interferência
+    ax.grid(False)
     # Calcular posições personalizadas com base nas distâncias fornecidas
     pos = calculate_positions()
     
     # Obter as cores e tamanhos dos nós
-    node_colors = get_node_colors()
+    node_colors = [planet_colors.get(node, "#FFFFFF") for node in G.nodes()]  # Usar o dicionário para definir a cor de cada planeta
     node_sizes = get_node_sizes()
 
     # Desenhar o grafo com cores personalizadas e tamanhos de nós
     nx.draw(G, pos, with_labels=True, node_color=node_colors, node_size=node_sizes, edge_color='gray', ax=ax, font_size=10, font_color='black')
     
-     # Obter rótulos das arestas (distâncias)
+    # Obter rótulos das arestas (distâncias)
     labels = nx.get_edge_attributes(G, 'weight')
-    nx.draw_networkx_edge_labels(G, pos, edge_labels={k: f"{v}" for k, v in labels.items()}, ax=ax, font_color='red')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels={k: f"{v}" for k, v in labels.items()}, ax=ax, font_color='gray')
 
+    # Atualizar o canvas
     canvas.draw()
+    window.update_idletasks()  
 
 # Função para popular as opções de planetas
 def populate_planet_options():
@@ -447,17 +469,17 @@ def reset_fields():
     update_missing_planets_dropdown()  
     update_delete_planet_dropdown()
     '''
-# Mostrar as informações do Grafo
-def show_graph_info():
-   
-    info_text = ""
+
+def show_complete_graph_info():
     
+    info_text = ""
+ 
     if G.is_directed():
         info_text += "O grafo é direcionado.\n"
     else:
         info_text += "O grafo NÃO é direcionado.\n"
 
-    
+  
     if nx.get_edge_attributes(G, 'weight'):
         info_text += "O grafo é valorado (contém pesos nas arestas).\n"
     else:
@@ -475,33 +497,13 @@ def show_graph_info():
     for node in G.nodes:
         info_text += f"- {node}: {G.degree(node)} conexões\n"
 
-
-   
-    info_window = tk.Toplevel(window) 
-    info_window.title("Dados do Grafo")  
-    
- 
-    text_widget = tk.Text(info_window, height=15, width=50)
-    text_widget.pack(padx=10, pady=10)
-    
- 
-    text_widget.insert(tk.END, info_text)
-    
-    
-    text_widget.config(state=tk.DISABLED)
-
-#Verificar o tipo que é o grafo
-def verificar_tipo_de_grafo():
-    """
-    Verifica o tipo do grafo: Euleriano, semi-Euleriano, Hamiltoniano, simples, nulo, trivial ou regular.
-    """
     tipo_grafo = []
 
-   
-    if not nx.is_connected(G): 
+
+    if not nx.is_connected(G):
         tipo_grafo.append("O grafo não é conexo, portanto, não é Euleriano nem semi-Euleriano.")
     else:
-        # Contar os vértices com grau ímpar
+        
         vertices_grau_impar = [v for v, grau in G.degree() if grau % 2 != 0]
 
         if len(vertices_grau_impar) == 0:
@@ -511,21 +513,20 @@ def verificar_tipo_de_grafo():
         else:
             tipo_grafo.append("O grafo não é Euleriano nem semi-Euleriano.")
 
-   
     try:
         ciclo_hamiltoniano = list(nx.find_cycle(G))
         tipo_grafo.append("O grafo é Hamiltoniano (contém um ciclo de Hamilton).")
     except nx.NetworkXNoCycle:
         tipo_grafo.append("O grafo não é Hamiltoniano.")
-
+  
     if any(G.has_edge(v, v) for v in G.nodes()):
         tipo_grafo.append("O grafo não é simples (contém laços).")
     else:
         tipo_grafo.append("O grafo é simples (não contém laços).")
-
+ 
     if len(G.edges()) == 0:
         tipo_grafo.append("O grafo é nulo (não contém arestas).")
-
+  
     if len(G.nodes()) == 1:
         tipo_grafo.append("O grafo é trivial (apenas um vértice).")
 
@@ -535,21 +536,18 @@ def verificar_tipo_de_grafo():
     else:
         tipo_grafo.append("O grafo não é regular (vértices com graus diferentes).")
 
-    return "\n".join(tipo_grafo)
+    info_text += "\n\nCaracterísticas do grafo:\n" + "\n".join(tipo_grafo)
 
-def mostrar_tipo_de_grafo():
-    """
-    Mostra o tipo de grafo (Euleriano, semi-Euleriano, Hamiltoniano, simples, composto, nulo, trivial ou regular) em uma janela.
-    """
-    tipo_grafo = verificar_tipo_de_grafo()
+    info_window = tk.Toplevel(window)
+    info_window.title("Informações Completas do Grafo")
 
-    # Criar uma nova janela para exibir o resultado
-    tipo_window = tk.Toplevel(window)
-    tipo_window.title("Tipo de Grafo")
+    text_widget = tk.Text(info_window, height=20, width=60)
+    text_widget.pack(padx=10, pady=10)
 
-    # Adicionar uma label para mostrar o resultado
-    label = tk.Label(tipo_window, text=tipo_grafo, wraplength=300, justify="left")
-    label.pack(padx=10, pady=10)
+    # Inserir o texto de informações no widget
+    text_widget.insert(tk.END, info_text)
+
+    text_widget.config(state=tk.DISABLED)
 
 # Consultar as arestas e os Vertices
 def consultar_aresta():
@@ -737,17 +735,15 @@ frame_actions.grid(row=2, column=0, columnspan=10, padx=10, pady=5, sticky='ew')
 btn_reset = tk.Button(frame_actions, text="Resetar", command=reset_fields)
 btn_reset.grid(row=2, column=1, padx=5, pady=5, sticky='ew')
 
-btn_show_graph_info = tk.Button(frame_actions, text="Info do Grafo", command=show_graph_info)
+btn_show_graph_info = tk.Button(frame_actions, text="Info do Grafo", command=show_complete_graph_info)
 btn_show_graph_info.grid(row=2, column=2, padx=5, pady=5, sticky='ew')
 
 btn_consultar_aresta = tk.Button(frame_actions, text="Dados do Grafo", command=consultar_aresta)
 btn_consultar_aresta.grid(row=2, column=3, padx=5, pady=5, sticky='ew')
 
-btn_tipo_de_grafo = tk.Button(frame_actions, text="Verificar Tipo de Grafo", command=mostrar_tipo_de_grafo)
-btn_tipo_de_grafo.grid(row=2, column=5, padx=2, pady=2, sticky='ew')
 
 btn_show_adj_matrix = tk.Button(frame_actions, text="Matriz_Adj", command=show_adjacency_matrix)
-btn_show_adj_matrix.grid(row=2, column=4, padx=5, pady=5, sticky='ew')
+btn_show_adj_matrix.grid(row=2, column=5, padx=5, pady=5, sticky='ew')
 
 # Campo de texto para exibir a viagem e o combustível
 travel_info_text = tk.Text(window, height=5, width=50)
@@ -760,6 +756,8 @@ frame_graph.grid(row=3, column=0, columnspan=10, padx=10, pady=5, sticky='nsew')
 
 fig = plt.Figure(figsize=(6, 6))
 canvas = FigureCanvasTkAgg(fig, master=frame_graph)
+canvas.get_tk_widget().config(bg='#0d1b2a')  # Fundo azul claro para o widget Tkinter
 canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
 
 window.mainloop()
