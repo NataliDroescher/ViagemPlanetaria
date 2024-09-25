@@ -1,14 +1,16 @@
 FUNCIONALIDADES
 
-# Regra 1: Viagens para Vênus (permitidas apenas em janeiro, março, junho) []
+# Regra 1: Viagens para Saturno (recomendada que seja realizado em janeiro, março, junho)
 
-# Regra 2: Evitar viagens para Marte em dezembro, fevereiro, agosto [x]
+# Regra 2: Evitar viagens para Marte em dezembro, fevereiro, agosto 
 
-# Regra 3: Alinhamento planetário entre Terra e Júpiter (menor consumo de combustível em maio, junho, outubro) [x]
+# Regra 3: Alinhamento planetário entre Terra e Júpiter (menor consumo de combustível em maio, junho, outubro)
 
-# Regra 4: Verificar se há parada em Júpiter ou Saturno para aplicar "slingshot" []
+# Regra 4: Verificar se há parada em Júpiter ou Saturno para aplicar "slingshot"
 
-# Regra 5: Verifica se tem gasolina suficiente. [x]
+# Regra 5: Viagens a Netuno nos messes de janeiro a abril, não podem ocorrer
+
+# Regra 6: Verifica se tem gasolina sufuciente.
 
 
 
